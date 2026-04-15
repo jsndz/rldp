@@ -63,7 +63,7 @@ func Send(data string, address string) {
 			log.Println("received non-ACK response from", ack, "with payload:", payload)
 			continue
 		}
-
+		counter++
 		break
 	}
 }
