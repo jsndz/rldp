@@ -1,4 +1,4 @@
-package transport
+package rawtransport
 
 import (
 	"log"
@@ -9,15 +9,15 @@ import (
 
 func Receive() {
 	println("receiving data")
-	iface, _ := net.InterfaceByName("wlan0")
+	iface, _ := net.InterfaceByName("eth0")
 
 	fd, err := unix.Socket(unix.AF_PACKET, unix.SOCK_RAW, int(unix.ETH_P_ALL))
 	// fd indicates raw packet socket
 	// it is what is used to identify your socket in os
-	if err == nil {
+	if err != nil {
 		log.Fatal(err)
 	}
-	// addr of the wlan0 in the format that fd can take
+	// addr of the eth0 in the format that fd can take
 	addr := &unix.SockaddrLinklayer{
 		Protocol: unix.ETH_P_ALL,
 		Ifindex:  iface.Index,
