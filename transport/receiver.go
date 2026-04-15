@@ -1,6 +1,8 @@
 package transport
 
 import (
+	"bytes"
+	"encoding/binary"
 	"log"
 	"net"
 )
@@ -20,10 +22,13 @@ func Receive() {
 	buf := make([]byte, 1024)
 
 	for {
-		n, _, err := conn.ReadFromUDP(buf)
+		n, clientAddr, err := conn.ReadFromUDP(buf)
 		if err != nil {
 			log.Fatal(err)
 		}
 		log.Println(string(buf[:n]))
+		var buf bytes.Buffer
+		binary.Write(&buf, binary.BigEndian, uint32(1))
+		conn.WriteToUDP(buf.Bytes(), clientAddr)
 	}
 }
