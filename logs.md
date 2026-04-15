@@ -155,3 +155,8 @@ func Receive() {
 	}
 }
 ```
+
+
+
+The testing with raw ethernet was hard and not working so switched to UDP
+also added sq,ack, type and payload to the packet

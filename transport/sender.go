@@ -1,15 +1,13 @@
 package transport
 
 import (
-	"bytes"
-	"encoding/binary"
+	"fmt"
 	"log"
 	"net"
-)
+	"time"
 
-const (
-	DATA = 1
-	ACK  = 2
+	"github.com/jsndz/rldp/protocol"
+	"github.com/jsndz/rldp/types"
 )
 
 func Send(data string, address string) {
@@ -18,32 +16,54 @@ func Send(data string, address string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	seq := uint32(1)
+
 	conn, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
-	var buf bytes.Buffer
+	counter := 1
 
-	binary.Write(&buf, binary.BigEndian, uint32(seq))
-	binary.Write(&buf, binary.BigEndian, uint32(0))
-	buf.WriteByte(byte(DATA))
-	buf.WriteString(data)
+	buf := protocol.Encoding(types.Frame{
+		Seq:     uint32(counter),
+		Ack:     uint32(0),
+		Type:    uint8(types.DATA),
+		Payload: []byte(data),
+	})
 
-	_, err = conn.Write(buf.Bytes())
+	_, err = conn.Write(buf)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Println("sent data to", address)
-	var responseBuf bytes.Buffer
-	for {
 
-		_, _, err := conn.ReadFromUDP(responseBuf.Bytes())
+	for {
+		// adding deadline if no response is available
+		conn.SetDeadline(time.Now().Add(time.Second * 2))
+		recvBuf := make([]byte, 2048)
+
+		n, _, err := conn.ReadFromUDP(recvBuf)
 		if err != nil {
+			fmt.Println("sending again")
+			if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
+				_, err = conn.Write(buf)
+				if err != nil {
+					log.Fatal(err)
+				}
+				continue
+			}
 			log.Fatal(err)
+
 		}
-		log.Println("received response from", address)
+		seq, ack, frameType, payload := protocol.Decoding(recvBuf[:n])
+		if frameType == types.ACK {
+			log.Println("received ACK from", seq, "with payload:", payload)
+		} else {
+			log.Println("received non-ACK response from", ack, "with payload:", payload)
+			continue
+		}
+
+		break
 	}
 }

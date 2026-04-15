@@ -1,10 +1,11 @@
 package transport
 
 import (
-	"bytes"
-	"encoding/binary"
 	"log"
 	"net"
+
+	"github.com/jsndz/rldp/protocol"
+	"github.com/jsndz/rldp/types"
 )
 
 func Receive() {
@@ -26,9 +27,14 @@ func Receive() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println(string(buf[:n]))
-		var buf bytes.Buffer
-		binary.Write(&buf, binary.BigEndian, uint32(1))
-		conn.WriteToUDP(buf.Bytes(), clientAddr)
+		seq, _, _, payload := protocol.Decoding(buf[:n])
+		resp := protocol.Encoding(types.Frame{
+			Seq:     uint32(seq),
+			Ack:     uint32(1),
+			Type:    uint8(types.ACK),
+			Payload: []byte("ACK for " + payload),
+		})
+		conn.WriteToUDP(resp, clientAddr)
 	}
+
 }
