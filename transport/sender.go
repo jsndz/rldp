@@ -56,7 +56,11 @@ func Send(data string, address string) {
 			log.Fatal(err)
 
 		}
-		seq, ack, frameType, payload := protocol.Decoding(recvBuf[:n])
+		seq, ack, frameType, payload, _ := protocol.Decoding(recvBuf[:n])
+		if !protocol.VerifyChecksum(recvBuf[:n]) {
+			log.Println("received corrupted frame with seq:", seq, "ack:", ack, "payload:", payload)
+			continue
+		}
 		if frameType == types.ACK {
 			log.Println("received ACK from", seq, "with payload:", payload)
 		} else {
