@@ -3,6 +3,7 @@ package transport
 import (
 	"log"
 	"net"
+	"time"
 
 	"github.com/jsndz/rldp/protocol"
 	"github.com/jsndz/rldp/types"
@@ -79,6 +80,7 @@ func Receive() {
 				Ack:  uint32(frame.Seq),
 				Type: uint8(types.ACK),
 			})
+			time.Sleep(time.Second * 9)
 			conn.WriteToUDP(resp, clientAddr)
 			log.Println("processed buffered frame with seq:", frame.Seq, "payload:", string(frame.Payload))
 			counter++

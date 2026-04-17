@@ -10,7 +10,7 @@ import (
 	"github.com/jsndz/rldp/types"
 )
 
-func Send(data string, address string, counter int) {
+func Send(data string, address string, counter int) (int, int) {
 	addr, err := net.ResolveUDPAddr("udp", address)
 	// resolves the address into a format with ip and port
 	if err != nil {
@@ -39,7 +39,7 @@ func Send(data string, address string, counter int) {
 
 	for {
 		// adding deadline if no response is available
-		conn.SetDeadline(time.Now().Add(time.Second * 2))
+		conn.SetDeadline(time.Now().Add(time.Second * 10))
 		recvBuf := make([]byte, 2048)
 
 		n, _, err := conn.ReadFromUDP(recvBuf)
@@ -48,12 +48,10 @@ func Send(data string, address string, counter int) {
 			if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
 				_, err = conn.Write(buf)
 				if err != nil {
-					log.Fatal(err)
+					return counter, 0
 				}
 				continue
 			}
-			log.Fatal(err)
-
 		}
 		seq, ack, frameType, payload, _ := protocol.Decoding(recvBuf[:n])
 		if !protocol.VerifyChecksum(recvBuf[:n]) {
@@ -66,7 +64,8 @@ func Send(data string, address string, counter int) {
 			log.Println("received non-ACK response from", ack, "with payload:", payload)
 			continue
 		}
-		counter++
-		break
+		return counter, int(ack)
+
 	}
+
 }
