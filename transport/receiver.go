@@ -83,7 +83,5 @@ func Receive() {
 			log.Println("processed buffered frame with seq:", frame.Seq, "payload:", string(frame.Payload))
 			counter++
 		}
-
 	}
-
 }

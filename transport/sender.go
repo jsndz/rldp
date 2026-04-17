@@ -10,7 +10,7 @@ import (
 	"github.com/jsndz/rldp/types"
 )
 
-func Send(data string, address string) {
+func Send(data string, address string, counter int) {
 	addr, err := net.ResolveUDPAddr("udp", address)
 	// resolves the address into a format with ip and port
 	if err != nil {
@@ -22,7 +22,6 @@ func Send(data string, address string) {
 		log.Fatal(err)
 	}
 	defer conn.Close()
-	counter := 1
 
 	buf := protocol.Encoding(types.Frame{
 		Seq:     uint32(counter),
@@ -61,7 +60,7 @@ func Send(data string, address string) {
 			log.Println("received corrupted frame with seq:", seq, "ack:", ack, "payload:", payload)
 			continue
 		}
-		if frameType == types.ACK {
+		if frameType == types.ACK && ack == uint32(counter) {
 			log.Println("received ACK from", seq, "with payload:", payload)
 		} else {
 			log.Println("received non-ACK response from", ack, "with payload:", payload)

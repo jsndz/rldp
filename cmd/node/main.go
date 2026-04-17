@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/jsndz/rldp/transport"
 )
@@ -23,7 +22,19 @@ func main() {
 			fmt.Println("usage: go run cmd/node/main.go send <dst-mac> <message>")
 			return
 		}
-		transport.Send(strings.Join(args[3:], " "), args[2])
+		addr := args[2]
+		counter := 1
+		for {
+			var msg string
+			fmt.Println(">")
+			fmt.Scanln(&msg)
+
+			if msg == "exit" {
+				break
+			}
+			transport.Send(msg, addr, counter)
+			counter++
+		}
 	case "receive":
 
 		transport.Receive()
